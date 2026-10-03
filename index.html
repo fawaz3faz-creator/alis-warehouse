@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Product Media Saver</title>
+    <style>
+      :root {
+        --bg: #f4f7fb;
+        --card: #ffffff;
+        --text: #1f2937;
+        --muted: #667085;
+        --primary: #2563eb;
+        --primary-soft: #dbeafe;
+        --border: #e5e7eb;
+        --shadow: rgba(15, 23, 42, 0.06);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Arial, sans-serif;
+      }
+
+      .container {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 20px 16px 60px;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        box-shadow: 0 8px 20px var(--shadow);
+        padding: 18px;
+        margin-bottom: 20px;
+      }
+
+      h1, h2, h3 {
+        margin-top: 0;
+      }
+
+      .subtitle {
+        color: var(--muted);
+        margin: 0 0 20px;
+        line-height: 1.5;
+      }
+
+      label {
+        display: block;
+        font-weight: 700;
+        margin: 12px 0 8px;
+        font-size: 14px;
+      }
+
+      input[type="text"], input[type="url"], input[type="file"] {
+        width: 100%;
+        padding: 14px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: #fff;
+        font-size: 16px;
+      }
+
+      input[type="file"] {
+        background: #f8fafc;
+        border-style: dashed;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      button {
+        appearance: none;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 18px;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .primary {
+        background: var(--primary);
+        color: #fff;
+      }
+
+      .secondary {
+        background: var(--primary-soft);
+        color: var(--primary);
+      }
+
+      .gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        margin-top: 12px;
+      }
+
+      .media-card {
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        overflow: hidden;
+        background: #fff;
+      }
+
+      .media-preview {
+        width: 100%;
+        display: block;
+        background: #eef2f7;
+        height: 220px;
+        object-fit: cover;
+      }
+
+      .media-info {
+        padding: 10px 12px 12px;
+      }
+
+      .media-name {
+        display: block;
+        font-weight: 700;
+        margin-bottom: 6px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .media-meta {
+        color: var(--muted);
+        font-size: 13px;
+        margin-bottom: 8px;
+      }
+
+      .download-btn {
+        width: 100%;
+        background: #eef2ff;
+        color: #3730a3;
+        font-size: 14px;
+        padding: 10px;
+      }
+
+      .empty {
+        color: var(--muted);
+        text-align: center;
+        padding: 26px 12px;
+      }
+
+      .note {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 12px;
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="card">
+        <h1>Product Media Saver</h1>
+        <p class="subtitle">
+          Save product videos and photos to your phone. Paste the product link, upload your media,
+          then download everything in one click.
+        </p>
+
+        <label for="productName">Product name</label>
+        <input id="productName" type="text" placeholder="Example: Smart Watch" />
+
+        <label for="productLink">Product link</label>
+        <input id="productLink" type="url" placeholder="https://..." />
+
+        <label for="mediaUpload">Upload images or videos</label>
+        <input id="mediaUpload" type="file" multiple accept="image/*,video/*" />
+
+        <div class="actions">
+          <button class="primary" id="saveBtn">Save product</button>
+          <button class="secondary" id="downloadAllBtn">Download all</button>
+        </div>
+
+        <div class="note">
+          This page stores media locally in your browser. If a site blocks direct media access,
+          you can still upload the files manually and download them to your phone.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Media gallery</h2>
+        <div id="gallery" class="gallery"></div>
+      </div>
+    </div>
+
+    <script>
+      const productNameInput = document.getElementById('productName');
+      const productLinkInput = document.getElementById('productLink');
+      const mediaUpload = document.getElementById('mediaUpload');
+      const gallery = document.getElementById('gallery');
+      const saveBtn = document.getElementById('saveBtn');
+      const downloadAllBtn = document.getElementById('downloadAllBtn');
+
+      let mediaItems = [];
+
+      function formatSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+      }
+
+      function readSavedData() {
+        try {
+          const saved = JSON.parse(localStorage.getItem('productMediaSaverData') || 'null');
+          if (!saved || !Array.isArray(saved.items)) return;
+          productNameInput.value = saved.name || '';
+          productLinkInput.value = saved.link || '';
+          mediaItems = saved.items;
+          renderGallery();
+        } catch (error) {
+          console.error('Failed to read saved data', error);
+        }
+      }
+
+      function persistData() {
+        localStorage.setItem('productMediaSaverData', JSON.stringify({
+          name: productNameInput.value.trim(),
+          link: productLinkInput.value.trim(),
+          items: mediaItems
+        }));
+      }
+
+      function triggerDownload(url, fileName) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
+
+      function renderGallery() {
+        gallery.innerHTML = '';
+
+        if (!mediaItems.length) {
+          gallery.innerHTML = '<div class="empty">No media uploaded yet.</div>';
+          return;
+        }
+
+        mediaItems.forEach((item, index) => {
+          const card = document.createElement('div');
+          card.className = 'media-card';
+
+          const preview = document.createElement(item.type.startsWith('video') ? 'video' : 'img');
+          preview.className = 'media-preview';
+          preview.src = item.url;
+          preview.controls = item.type.startsWith('video');
+          preview.autoplay = false;
+
+          const info = document.createElement('div');
+          info.className = 'media-info';
+
+          const title = document.createElement('span');
+          title.className = 'media-name';
+          title.textContent = item.name || `Media ${index + 1}`;
+
+          const meta = document.createElement('div');
+          meta.className = 'media-meta';
+          meta.textContent = item.size ? formatSize(item.size) : 'Saved item';
+
+          const button = document.createElement('button');
+          button.className = 'download-btn';
+          button.textContent = 'Download';
+          button.addEventListener('click', () => triggerDownload(item.url, item.name || `media-${index + 1}`));
+
+          info.appendChild(title);
+          info.appendChild(meta);
+          info.appendChild(button);
+          card.appendChild(preview);
+          card.appendChild(info);
+          gallery.appendChild(card);
+        });
+      }
+
+      mediaUpload.addEventListener('change', (event) => {
+        const files = Array.from(event.target.files || []);
+
+        files.forEach((file) => {
+          mediaItems.push({
+            name: file.name,
+            type: file.type || 'application/octet-stream',
+            size: file.size,
+            url: URL.createObjectURL(file)
+          });
+        });
+
+        renderGallery();
+        persistData();
+        mediaUpload.value = '';
+      });
+
+      saveBtn.addEventListener('click', () => {
+        persistData();
+        alert('Product saved on this device.');
+      });
+
+      downloadAllBtn.addEventListener('click', () => {
+        if (!mediaItems.length) {
+          alert('Upload at least one image or video first.');
+          return;
+        }
+
+        mediaItems.forEach((item, index) => {
+          setTimeout(() => {
+            triggerDownload(item.url, item.name || `media-${index + 1}`);
+          }, index * 250);
+        });
+      });
+
+      readSavedData();
+      renderGallery();
+    </script>
+  </body>
+</html>
