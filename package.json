@@ -1,0 +1,9 @@
+{
+  "name": "product-media-saver",
+  "version": "1.0.0",
+  "description": "Extract product media from a URL and let users download images/videos to their device.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

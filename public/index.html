@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Product Media Extractor</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="card hero-card">
+        <p class="eyebrow">Product media downloader</p>
+        <h1>Extract videos and images from any product link</h1>
+        <p class="subtitle">
+          Paste a product URL, scan it, and download the product media directly to your device.
+        </p>
+
+        <div class="input-row">
+          <input id="productUrl" type="url" placeholder="https://example.com/product" />
+          <button id="scanBtn" class="primary-btn">Extract media</button>
+        </div>
+
+        <div class="actions-row">
+          <button id="downloadAllBtn" class="secondary-btn">Download all</button>
+        </div>
+
+        <p id="status" class="status">Waiting for a product link.</p>
+      </div>
+
+      <div class="card">
+        <h2>Found media</h2>
+        <div id="gallery" class="gallery"></div>
+      </div>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
